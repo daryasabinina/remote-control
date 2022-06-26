@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { httpServer } from './src/http_server/index';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer, WebSocket, createWebSocketStream } from 'ws';
 import operationsSwitcher from './src/ws_operations/operationsSwitcher';
 
 interface WSExtended extends WebSocket {
@@ -17,12 +17,13 @@ console.log(`WebSocket server will be run on the port: ${WS_PORT}`)
 httpServer.listen(HTTP_PORT);
 
 wss.on('connection', function connection(ws: WSExtended) {
+    const duplex = createWebSocketStream(ws, { encoding: 'utf8' });
     console.log(`Start ws server on the ${WS_PORT} port!`);
     ws.isAlive = true;
 
-    ws.on('message', function message(data) {
+    duplex.on('data', data => {
         operationsSwitcher(ws, data.toString());
-    });
+    })
 
     ws.on('pong', () => {
         ws.isAlive = true;
